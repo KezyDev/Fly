@@ -1,0 +1,51 @@
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+local flying = false
+local speed = 50
+
+local function fly()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoid = character:FindFirstChildOfClass('Humanoid')
+
+    if not humanoid or flying then return end
+    flying = true
+
+    local bodyGyro = Instance.new("BodyGyro")
+    local bodyVelocity = Instance.new("BodyVelocity")
+
+    bodyGyro.P = 9e4
+    bodyGyro.Parent = character.PrimaryPart
+
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.MaxForce = Vector3.new(9e4, 9e4, 9e4)
+    bodyVelocity.Parent = character.PrimaryPart
+
+    local conn1, conn2
+
+    conn1 = mouse.KeyDown:Connect(function(key)
+        if key:lower() == "e" then
+            flying = not flying
+            if not flying then
+                bodyGyro:Destroy()
+                bodyVelocity:Destroy()
+                conn1:Disconnect()
+                conn2:Disconnect()
+            end
+        end
+    end)
+
+    conn2 = game:GetService("RunService").Stepped:Connect(function()
+        if flying then
+            bodyVelocity.Velocity = ((game.Workspace.CurrentCamera.CFrame.lookVector * speed) + Vector3.new(0, workspace.Gravity / 50, 0))
+            bodyGyro.CFrame = game.Workspace.CurrentCamera.CFrame
+        end
+    end)
+end
+
+local function onKeyPress(inputObject, gameProcessedEvent)
+    if inputObject.KeyCode == Enum.KeyCode.F and not gameProcessedEvent then
+        fly()
+    end
+end
+
+game:GetService("UserInputService").InputBegan:Connect(onKeyPress)
